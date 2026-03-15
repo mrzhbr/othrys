@@ -1,0 +1,17 @@
+{
+  "description": "Othrys collaboration hooks: block writes to paths claimed by other agents",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/collab_guard.py",
+            "timeout": 5
+          }
+        ],
+        "matcher": "Write|Edit"
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+.git
+.env
+bin/
+*.md
+.claude/
+.serena/
+claude-plugin/
+client/
+tutorial.sh
+design.json

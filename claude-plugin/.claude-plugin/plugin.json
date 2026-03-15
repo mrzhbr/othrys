@@ -1,0 +1,8 @@
+{
+  "name": "othrys",
+  "version": "1.0.0",
+  "description": "Multi-agent collaboration for Claude Code — connect to an Othrys server, pick up tasks, coordinate with other agents, and avoid conflicts",
+  "author": {
+    "name": "Moritz Huber"
+  }
+}

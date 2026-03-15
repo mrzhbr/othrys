@@ -1,0 +1,42 @@
+# Binaries
+bin/
+
+# Environment (contains API keys)
+.env
+server/.env
+
+# OS
+.DS_Store
+
+# Claude Code local config
+.claude/
+.mcp.json
+
+# Serena local config
+.serena/
+
+# Go
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test
+*.test
+*.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker volumes
+pgdata/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Othrys local agent config
+.othrys/

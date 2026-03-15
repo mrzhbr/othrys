@@ -33,8 +33,9 @@ othrys/
     git/             — GitService interface + LocalGitService (CLI wrapper)
     cli/             — CLI command definitions, HTTP client wrapper
   migrations/        — SQL migration files
-  Dockerfile
-  docker-compose.yml
+  server/            — Docker deployment (Dockerfile, docker-compose.yml, .env.example)
+  client/            — Client installer (install.sh)
+  claude-plugin/     — Claude Code slash commands + collab_guard hook
   Makefile
   go.mod
 ```
@@ -49,13 +50,15 @@ othrys/
 - **Git operations** → `internal/git/service.go` (interface), `internal/git/local.go` (impl)
 - **LLM task splitting** → `internal/planner/`
 - **CLI commands** → `internal/cli/cmd_*.go`
-- **OmO integration** → `omo-plugin/` (hooks, commands, scripts — separate from server)
+- **Claude Code plugin** → `claude-plugin/` (slash commands, collab_guard hook, setup scripts)
+- **Server deployment** → `server/` (Dockerfile, docker-compose.yml, .env.example)
+- **Client installer** → `client/` (install.sh, README)
 
 ## Architecture Decisions
 - **Server has zero git dependency.** Git ops are client-side only via `GitService` interface in CLI. Server tracks branch names only. Docker image does NOT need git.
 - **EventBus abstraction.** All event publishing goes through `EventBus` interface. Only `pgbus.go` touches PG LISTEN/NOTIFY. Coordinators and stores never call pg_notify directly.
 - **Module = directory path prefix.** Claiming `src/auth/` means exclusive access to all files under that path. Path overlap = one path is prefix of the other.
-- **Claims cache for OmO hooks.** `collab_guard.py` reads local `.claude/omo/.othrys_claims_cache.json` — no HTTP per write. Stale cache allows writes (never blocks on stale data).
+- **Claims cache for collab_guard.** `collab_guard.py` reads local `.othrys/claims_cache.json` — no HTTP per write. Stale cache allows writes (never blocks on stale data).
 - **Project-scoped API keys.** No OAuth for v1. Keys generated on project creation.
 - **Branch naming:** `othrys/{agent-name}/{task-slug}`
 
@@ -66,7 +69,7 @@ othrys/
 - HTTP handlers: validate input → call store/coordinator → return JSON
 - All REST endpoints require `Authorization: Bearer <api-key>`. Agent endpoints also require `X-Agent-Id` header
 - Tests: use real PostgreSQL (testcontainers or docker-compose test service), not mocks for store tests. Mock EventBus for coordinator tests.
-- Python hooks (OmO): stdlib only, no pip dependencies
+- Python hooks (collab_guard): stdlib only, no pip dependencies
 
 ## Anti-Patterns
 - Do NOT call `pg_notify` outside `internal/events/pgbus.go`
@@ -81,9 +84,12 @@ othrys/
 # Build
 make build                    # Builds both server and CLI binaries
 
-# Run locally
-docker compose up -d          # Starts server + PostgreSQL
-docker compose down           # Stops everything
+# Server (Docker)
+make server-up                # Starts server + PostgreSQL
+make server-down              # Stops everything
+
+# Client install
+make client-install           # Builds CLI + installs Claude Code commands
 
 # Test
 go test ./... -v -count=1     # Full test suite
