@@ -52,7 +52,7 @@ This section is for anyone who wants to **use** Othrys — you have a server run
 ### First-time setup
 
 ```bash
-git clone <your-repo-url> && cd othrys
+git clone https://github.com/mrzhbr/othrys && cd othrys
 ```
 
 Add the marketplace to `~/.claude/settings.json` (replace the path with your actual clone location):
