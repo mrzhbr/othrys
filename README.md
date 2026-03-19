@@ -579,4 +579,4 @@ othrys/
 
 ## License
 
-MIT
+Sustainable Use License — see [LICENSE](LICENSE) for details.
