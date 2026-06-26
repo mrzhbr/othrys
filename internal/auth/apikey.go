@@ -2,8 +2,10 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -21,8 +23,10 @@ func ValidateAPIKey(ctx context.Context, pool *pgxpool.Pool, apiKey string) (str
 	).Scan(&projectID)
 
 	if err != nil {
-		// pgx returns pgx.ErrNoRows when not found
-		return "", nil
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
 	}
 
 	return projectID, nil
