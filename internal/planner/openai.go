@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 const defaultOpenAIModel = "gpt-4o"
@@ -51,7 +52,7 @@ func (p *OpenAIProvider) SplitDesign(design string, projectConfig map[string]any
 	req.Header.Set("Authorization", "Bearer "+p.APIKey)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := (&http.Client{Timeout: 4 * time.Minute}).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("call OpenAI API: %w", err)
 	}
