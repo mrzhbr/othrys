@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Othrys — Kanban Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0b;--bg-surface:#111113;--bg-elevated:#18181b;--bg-hover:#1f1f23;
+  --bg-card:#141416;--border:#27272a;--border-sub:#1f1f23;
+  --text:#f4f4f5;--text2:#a1a1aa;--text3:#71717a;
+  --accent:#5e6ad2;--accent-dim:rgba(94,106,210,.15);
+  --green:#22c55e;--green-bg:rgba(34,197,94,.12);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.12);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.12);
+  --blue:#3b82f6;--blue-bg:rgba(59,130,246,.12);
+  --slate:#6b7280;--slate-bg:rgba(107,114,128,.12);
+  --radius:8px;--radius-sm:6px;
+  --font:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  --shadow:0 1px 2px rgba(0,0,0,.5);
+}
+html{font-size:13px}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--accent);text-decoration:none}
+::-webkit-scrollbar{height:6px;width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ─── SPINNER ─── */
+.spinner{border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;width:28px;height:28px;animation:spin .6s linear infinite;margin:60px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ─── SETUP SCREEN ─── */
+.setup{align-items:center;display:flex;flex:1;justify-content:center}
+.setup-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;width:400px;max-width:90vw}
+.setup-card h1{font-size:1.2rem;font-weight:600;margin-bottom:20px;letter-spacing:-.02em}
+.setup-card label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:4px;font-weight:500}
+.setup-card input{width:100%;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;color:var(--text);font-size:.9rem;font-family:var(--font);margin-bottom:14px;outline:none;transition:border-color .15s}
+.setup-card input:focus{border-color:var(--accent)}
+.setup-card button{width:100%;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);padding:9px 0;font-size:.85rem;font-weight:500;cursor:pointer;transition:opacity .15s;font-family:var(--font)}
+.setup-card button:hover{opacity:.9}
+.setup-card .hint{font-size:.75rem;color:var(--text3);margin-top:8px;text-align:center}
+
+/* ─── HEADER ─── */
+#header{display:none;padding:14px 24px;border-bottom:1px solid var(--border);background:var(--bg-surface);flex-shrink:0}
+#header .top{display:flex;align-items:center;justify-content:space-between}
+#header h1{font-size:1.1rem;font-weight:600;letter-spacing:-.02em}
+#header .meta{display:flex;gap:14px;color:var(--text2);font-size:.8rem}
+.meta-dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px}
+.meta-dot.online{background:var(--green)}
+.meta-dot.offline{background:var(--slate)}
+#err-msg{display:none;padding:10px 24px;background:var(--red-bg);color:var(--red);font-size:.85rem;border-bottom:1px solid var(--border);flex-shrink:0}
+
+/* ─── AGENTS BAR ─── */
+#agents-bar{display:none;align-items:center;gap:6px;padding:8px 24px;background:var(--bg-surface);border-bottom:1px solid var(--border-sub);flex-shrink:0;overflow-x:auto}
+#agents-bar .label{font-size:.7rem;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-right:2px;white-space:nowrap}
+.agent-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px 3px 5px;border-radius:var(--radius-sm);background:var(--bg-elevated);border:1px solid var(--border-sub);font-size:.78rem;color:var(--text2);white-space:nowrap}
+.agent-avatar{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:600;color:#fff;flex-shrink:0}
+.agent-dot{width:5px;height:5px;border-radius:50%;margin-left:auto}
+.agent-dot.idle{background:var(--green)}
+.agent-dot.working{background:var(--amber)}
+.agent-dot.disconnected{background:var(--slate)}
+
+/* ─── BOARD ─── */
+#board{display:none;flex:1;gap:12px;padding:14px 24px;overflow-x:auto;align-items:flex-start}
+.column{min-width:270px;max-width:310px;width:280px;flex-shrink:0;display:flex;flex-direction:column}
+.col-hdr{display:flex;align-items:center;justify-content:space-between;padding:6px 4px 10px 4px;font-size:.78rem;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.04em;border-bottom:2px solid var(--border-sub);margin-bottom:6px}
+.col-hdr .count{font-size:.68rem;background:var(--bg-elevated);color:var(--text3);padding:0 7px;border-radius:10px;font-weight:500;letter-spacing:0}
+.col.proposed .col-hdr{border-bottom-color:var(--slate)}
+.col.approved .col-hdr{border-bottom-color:var(--blue)}
+.col.assigned .col-hdr{border-bottom-color:var(--accent)}
+.col.in_progress .col-hdr{border-bottom-color:var(--amber)}
+.col.completed .col-hdr{border-bottom-color:var(--green)}
+.col.failed .col-hdr{border-bottom-color:var(--red)}
+.card-list{display:flex;flex-direction:column;gap:7px;min-height:40px;padding:2px 0}
+
+/* ─── CARD ─── */
+.card{background:var(--bg-card);border:1px solid var(--border-sub);border-radius:var(--radius);padding:10px 12px;box-shadow:var(--shadow);transition:border-color .15s,opacity .15s;position:relative}
+.card:hover{border-color:var(--border);background:var(--bg-hover)}
+.card-title{font-size:.88rem;font-weight:500;line-height:1.35;margin-bottom:5px;color:var(--text)}
+.card-meta{display:flex;align-items:center;gap:6px;font-size:.73rem;color:var(--text3);flex-wrap:wrap}
+.card-meta .mod{background:var(--bg-elevated);padding:1px 5px;border-radius:3px;font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:.68rem}
+.card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding-top:5px;border-top:1px solid var(--border-sub)}
+.card-asn{display:flex;align-items:center;gap:4px;font-size:.73rem;color:var(--text3)}
+.card-asn .mini-av{width:15px;height:15px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.5rem;font-weight:600;color:#fff;flex-shrink:0}
+.card-cl{font-size:.63rem;padding:1px 5px;border-radius:3px}
+.card-cl.exclusive{background:var(--red-bg);color:var(--red)}
+.card-cl.shared_read{background:var(--blue-bg);color:var(--blue)}
+.card-deps{font-size:.63rem;color:var(--text3)}
+.card-actions{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.card-actions button{font-size:.7rem;font-family:var(--font);padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text2);cursor:pointer;transition:all .12s}
+.card-actions button:hover{background:var(--bg-hover);color:var(--text)}
+.card-actions button.approve{border-color:var(--accent);color:var(--accent)}
+.card-actions button.approve:hover{background:var(--accent-dim)}
+.card-actions button.reject{border-color:var(--red);color:var(--red)}
+.card-actions button.reject:hover{background:var(--red-bg)}
+.card-actions button.start{border-color:var(--amber);color:var(--amber)}
+.card-actions button.start:hover{background:var(--amber-bg)}
+.card-actions button.complete{border-color:var(--green);color:var(--green)}
+.card-actions button.complete:hover{background:var(--green-bg)}
+.card-actions button.fail{border-color:var(--red);color:var(--red)}
+.card-actions button.fail:hover{background:var(--red-bg)}
+
+/* ─── CLAIMS PANEL ─── */
+#claims-panel{display:none;background:var(--bg-surface);border-top:1px solid var(--border);padding:8px 24px;flex-shrink:0;align-items:center;gap:10px;overflow-x:auto}
+#claims-panel .label{font-size:.68rem;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;margin-right:2px}
+.claim-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:var(--radius-sm);background:var(--bg-elevated);border:1px solid var(--border-sub);font-size:.73rem;color:var(--text2);white-space:nowrap}
+.claim-badge .cp{font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:.68rem}
+.claim-badge.exclusive{border-left:2px solid var(--red)}
+.claim-badge.shared_read{border-left:2px solid var(--blue)}
+
+/* ─── ASSIGN MODAL ─── */
+#assign-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center}
+#assign-modal{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:340px}
+#assign-modal h3{font-size:.95rem;font-weight:500;margin-bottom:14px}
+#assign-modal .agent-opt{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background .12s}
+#assign-modal .agent-opt:hover{background:var(--bg-hover)}
+#assign-modal .agent-opt.selected{background:var(--accent-dim);border:1px solid var(--accent)}
+#assign-modal .btn-row{display:flex;gap:8px;margin-top:14px}
+#assign-modal .btn-row button{flex:1;padding:7px 0;border-radius:var(--radius-sm);font-size:.82rem;font-weight:500;cursor:pointer;font-family:var(--font);border:none}
+#assign-modal .btn-row .ok{background:var(--accent);color:#fff}
+#assign-modal .btn-row .ok:hover{opacity:.9}
+#assign-modal .btn-row .cancel{background:var(--bg-elevated);color:var(--text2);border:1px solid var(--border)}
+#assign-modal .btn-row .cancel:hover{color:var(--text)}
+
+/* ─── EMPTY ─── */
+.empty-state{text-align:center;color:var(--text3);font-size:.8rem;padding:16px 0}
+
+/* ─── LOADING ─── */
+.loading-state{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px}
+.loading-state p{color:var(--text2);font-size:.85rem}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup" id="setup">
+  <div class="setup-card">
+    <h1>Connect to Othrys</h1>
+    <label>Server URL</label>
+    <input type="text" id="server-url" placeholder="http://localhost:8080" value="http://localhost:8080">
+    <label>Project ID</label>
+    <input type="text" id="project-id" placeholder="uuid">
+    <label>API Key</label>
+    <input type="password" id="api-key" placeholder="Bearer token">
+    <button onclick="connect()">Connect</button>
+    <div class="hint">Or add ?server=...&project=...&token=... to the URL</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-state" id="loading" style="display:none">
+  <div class="spinner"></div>
+  <p>Loading board state…</p>
+</div>
+
+<!-- ERROR -->
+<div id="err-msg"></div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="top">
+    <h1 id="project-name">othrys</h1>
+    <div class="meta">
+      <span><span class="meta-dot online"></span><span id="agents-online">0</span> online</span>
+      <span><span class="meta-dot offline"></span><span id="agents-offline">0</span> offline</span>
+      <span id="task-count">0 tasks</span>
+      <span id="claim-count">0 claims</span>
+    </div>
+  </div>
+</div>
+
+<!-- AGENTS BAR -->
+<div id="agents-bar"><span class="label">Agents</span></div>
+
+<!-- BOARD -->
+<div id="board"></div>
+
+<!-- CLAIMS -->
+<div id="claims-panel"><span class="label">Active Claims</span></div>
+
+<!-- ASSIGN MODAL -->
+<div id="assign-overlay" onclick="if(event.target===this)closeAssign()">
+  <div id="assign-modal">
+    <h3>Assign Task</h3>
+    <div id="assign-list"></div>
+    <div class="btn-row">
+      <button class="ok" onclick="confirmAssign()">Assign</button>
+      <button class="cancel" onclick="closeAssign()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───
+let S = {                           // full board state
+  columns: {proposed:[],approved:[],assigned:[],in_progress:[],completed:[],failed:[]},
+  agents: [], active_claims: []
+};
+let config = {server:'', project:'', token:''};
+let ws = null;
+let wsReconnectTimer = null;
+let assignCallback = null;          // (agentId) => void
+
+// ─── CONFIG ───
+function getConfig(){
+  const p = new URLSearchParams(location.search);
+  return {
+    server: p.get('server') || localStorage.getItem('othrys_server') || '',
+    project: p.get('project') || localStorage.getItem('othrys_project') || '',
+    token: p.get('token') || localStorage.getItem('othrys_token') || '',
+  };
+}
+function saveConfig(c){
+  localStorage.setItem('othrys_server',c.server);
+  localStorage.setItem('othrys_project',c.project);
+  localStorage.setItem('othrys_token',c.token);
+}
+function showSetup(){
+  document.getElementById('setup').style.display='flex';
+  document.getElementById('loading').style.display='none';
+  document.getElementById('board').style.display='none';
+  document.getElementById('header').style.display='none';
+  document.getElementById('agents-bar').style.display='none';
+  document.getElementById('claims-panel').style.display='none';
+  document.getElementById('err-msg').style.display='none';
+  const c=getConfig();
+  if(c.server) document.getElementById('server-url').value=c.server;
+  if(c.project) document.getElementById('project-id').value=c.project;
+  if(c.token) document.getElementById('api-key').value=c.token;
+}
+
+// ─── CONNECT ───
+function connect(){
+  const errEl=document.getElementById('err-msg');
+  errEl.style.display='none';
+  config.server=document.getElementById('server-url').value.trim().replace(/\/+$/,'');
+  config.project=document.getElementById('project-id').value.trim();
+  config.token=document.getElementById('api-key').value.trim();
+  if(!config.server||!config.project||!config.token){
+    errEl.textContent='All fields are required.';
+    errEl.style.display='block';
+    return;
+  }
+  saveConfig(config);
+  // Remove setup, show loading
+  document.getElementById('setup').style.display='none';
+  document.getElementById('loading').style.display='flex';
+  fetchBoard();
+}
+
+// ─── FETCH BOARD ───
+async function fetchBoard(){
+  const errEl=document.getElementById('err-msg');
+  try{
+    const res=await fetch(`${config.server}/api/v1/projects/${config.project}/board`,{
+      headers:{'Authorization':'Bearer '+config.token}
+    });
+    if(!res.ok){
+      const txt=await res.text();
+      throw new Error(`HTTP ${res.status}: ${txt.slice(0,200)}`);
+    }
+    S=await res.json();
+    document.getElementById('loading').style.display='none';
+    renderAll();
+    connectWS();
+  }catch(e){
+    errEl.textContent='Failed to load board: '+e.message;
+    errEl.style.display='block';
+    document.getElementById('loading').style.display='none';
+    showSetup();
+  }
+}
+
+// ─── RENDER ───
+function renderAll(){
+  renderHeader();
+  renderAgents();
+  renderColumns();
+  renderClaims();
+  document.getElementById('board').style.display='flex';
+  document.getElementById('header').style.display='block';
+  document.getElementById('agents-bar').style.display='flex';
+  document.getElementById('claims-panel').style.display='flex';
+}
+
+const COL_KEYS=['proposed','approved','assigned','in_progress','completed','failed'];
+const COL_LABELS={proposed:'Proposed',approved:'Approved',assigned:'Assigned',in_progress:'In Progress',completed:'Completed',failed:'Failed'};
+
+function renderHeader(){
+  const onAgents=S.agents.filter(a=>a.status!=='disconnected');
+  const offAgents=S.agents.filter(a=>a.status==='disconnected');
+  const totalTasks=COL_KEYS.reduce((s,k)=>s+S.columns[k].length,0);
+  document.getElementById('project-name').textContent='Project: '+config.project.slice(0,8)+'…';
+  document.getElementById('agents-online').textContent=onAgents.length;
+  document.getElementById('agents-offline').textContent=offAgents.length;
+  document.getElementById('task-count').textContent=totalTasks+' tasks';
+  document.getElementById('claim-count').textContent=S.active_claims.length+' claims';
+}
+
+function renderAgents(){
+  const bar=document.getElementById('agents-bar');
+  bar.innerHTML='<span class="label">Agents</span>';
+  const colors=['#5e6ad2','#22c55e','#f59e0b','#3b82f6','#a855f7','#ec4899','#14b8a6','#f97316'];
+  S.agents.forEach((a,i)=>{
+    const el=document.createElement('div');
+    el.className='agent-chip';
+    const av=document.createElement('div');
+    av.className='agent-avatar';
+    av.style.background=colors[i%colors.length];
+    av.textContent=a.name.slice(0,2).toUpperCase();
+    const dot=document.createElement('span');
+    dot.className='agent-dot '+a.status;
+    el.append(av,document.createTextNode(' '+a.name),dot);
+    bar.appendChild(el);
+  });
+  if(!S.agents.length) bar.innerHTML+='<span style="color:var(--text3);font-size:.78rem">No agents registered</span>';
+}
+
+function renderColumns(){
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  COL_KEYS.forEach(k=>{
+    const col=document.createElement('div');
+    col.className='column '+k;
+    const cards=S.columns[k]||[];
+    col.innerHTML=`<div class="col-hdr">${COL_LABELS[k]}<span class="count">${cards.length}</span></div><div class="card-list"></div>`;
+    const list=col.querySelector('.card-list');
+    cards.forEach(c=>{list.appendChild(renderCard(c,k));});
+    if(!cards.length){
+      const e=document.createElement('div');
+      e.className='empty-state';e.textContent='No tasks';
+      list.appendChild(e);
+    }
+    board.appendChild(col);
+  });
+}
+
+function renderCard(c,status){
+  const el=document.createElement('div');
+  el.className='card';
+  el.dataset.taskId=c.id;
+
+  // Check for claims on this card's task
+  const claim=S.active_claims.find(cl=>cl.task_id===c.id);
+
+  el.innerHTML=`
+    <div class="card-title">${esc(c.title)}</div>
+    <div class="card-meta">
+      <span class="mod">${esc(c.module_path||'—')}</span>
+      ${c.depends_on&&c.depends_on.length?`<span class="card-deps">⏱ ${c.depends_on.length} dep${c.depends_on.length>1?'s':''}</span>`:''}
+    </div>
+    <div class="card-footer">
+      <div class="card-asn">${renderAssignee(c)}</div>
+      ${claim?`<span class="card-cl ${claim.claim_type}">${claim.claim_type==='exclusive'?'🔒 exclusive':'👁 shared_read'}</span>`:'<span></span>'}
+    </div>
+    <div class="card-actions">${renderActions(c,status)}</div>
+  `;
+  return el;
+}
+
+function renderAssignee(c){
+  if(!c.assigned_agent) return '<span style="color:var(--text3)">Unassigned</span>';
+  const a=c.assigned_agent;
+  return `<span class="mini-av" style="background:${agentColor(a.id)}">${esc(a.name.slice(0,2).toUpperCase())}</span>${esc(a.name)}`;
+}
+
+function renderActions(c,status){
+  const btns=[];
+  const proj=config.project;
+  const token=config.token;
+  if(status==='proposed'){
+    btns.push(`<button class="approve" onclick="doAction('${c.id}','approve')">✓ Approve</button>`);
+    btns.push(`<button class="reject" onclick="doAction('${c.id}','reject')">✕ Reject</button>`);
+  }
+  if(status==='approved'){
+    btns.push(`<button class="start" onclick="showAssign('${c.id}')">→ Assign</button>`);
+  }
+  if(status==='assigned'){
+    btns.push(`<button class="start" onclick="doAction('${c.id}','start')">▶ Start</button>`);
+  }
+  if(status==='in_progress'){
+    btns.push(`<button class="complete" onclick="doAction('${c.id}','complete')">✓ Complete</button>`);
+    btns.push(`<button class="fail" onclick="doAction('${c.id}','fail')">✕ Fail</button>`);
+  }
+  return btns.join('');
+}
+
+function renderClaims(){
+  const panel=document.getElementById('claims-panel');
+  panel.innerHTML='<span class="label">Active Claims</span>';
+  if(!S.active_claims.length){
+    panel.innerHTML+='<span style="color:var(--text3);font-size:.78rem">No active claims</span>';
+    return;
+  }
+  S.active_claims.forEach(c=>{
+    const el=document.createElement('div');
+    el.className='claim-badge '+c.claim_type;
+    el.innerHTML=`<span>${c.claim_type==='exclusive'?'🔒':'👁'}</span><span class="cp">${esc(c.path)}</span><span style="color:var(--text3)">${esc(c.agent_name||c.agent_id.slice(0,8))}</span>`;
+    panel.appendChild(el);
+  });
+}
+
+// ─── WEB SOCKET ───
+function connectWS(){
+  if(ws) try{ws.close()}catch(e){}
+  const proto=config.server.startsWith('https')?'wss:':'ws:';
+  const url=config.server.replace(/^https?:\/\//,proto+'//').replace(/\/+$/,'')+
+    '/ws?token='+encodeURIComponent(config.token)+'&project_id='+encodeURIComponent(config.project);
+  ws=new WebSocket(url);
+  ws.onopen=()=>{console.log('[ws] connected');};
+  ws.onmessage=(e)=>{
+    try{
+      const msg=JSON.parse(e.data);
+      handleWSMsg(msg);
+    }catch(err){console.warn('[ws] parse:',err);}
+  };
+  ws.onclose=()=>{
+    console.log('[ws] disconnected — reconnecting in 5s');
+    ws=null;
+    wsReconnectTimer=setTimeout(connectWS,5000);
+  };
+  ws.onerror=()=>{ws&&ws.close();};
+}
+
+function handleWSMsg(msg){
+  switch(msg.type){
+    case 'task_status_changed':{
+      const p=msg.payload;
+      if(!p||!p.task_id) break;
+      // Re-fetch board state for simplicity — small scale
+      refreshBoard();
+      break;
+    }
+    case 'task_approved':
+    case 'task_assigned':
+    case 'claim_granted':
+    case 'claim_conflict':
+    case 'claim_released':
+      refreshBoard();
+      break;
+    case 'board_sync':
+      if(msg.payload&&msg.payload.columns){
+        S=msg.payload;
+        renderAll();
+      }
+      break;
+    default:
+      // ping, pong, error, etc. — ignore
+      break;
+  }
+}
+
+let refreshPending=false;
+function refreshBoard(){
+  if(refreshPending) return;
+  refreshPending=true;
+  setTimeout(async ()=>{
+    refreshPending=false;
+    try{
+      const res=await fetch(`${config.server}/api/v1/projects/${config.project}/board`,{
+        headers:{'Authorization':'Bearer '+config.token}
+      });
+      if(res.ok){
+        S=await res.json();
+        renderAll();
+      }
+    }catch(e){console.warn('refresh failed:',e);}
+  },300);
+}
+
+// ─── ACTIONS ───
+async function doAction(taskId,action){
+  const errEl=document.getElementById('err-msg');
+  errEl.style.display='none';
+  try{
+    let url, body;
+    switch(action){
+      case 'approve':
+        url=`${config.server}/api/v1/tasks/${taskId}`;
+        body={approve:true};
+        break;
+      case 'reject':
+        url=`${config.server}/api/v1/tasks/${taskId}`;
+        body={reject:true};
+        break;
+      case 'start':{
+        // Get current task to find assigned agent
+        const res=await fetch(`${config.server}/api/v1/projects/${config.project}/board`,{
+          headers:{'Authorization':'Bearer '+config.token}
+        });
+        if(!res.ok) throw new Error('board fetch failed');
+        const state=await res.json();
+        let agentId='';
+        for(const k of COL_KEYS){
+          const t=state.columns[k].find(c=>c.id===taskId);
+          if(t){agentId=t.assigned_agent_id||'';break;}
+        }
+        url=`${config.server}/api/v1/tasks/${taskId}`;
+        body={status:'in_progress',agent_id:agentId};
+        break;
+      }
+      case 'complete':
+        url=`${config.server}/api/v1/tasks/${taskId}`;
+        body={status:'completed'};
+        break;
+      case 'fail':
+        url=`${config.server}/api/v1/tasks/${taskId}`;
+        body={status:'failed'};
+        break;
+      default: return;
+    }
+    const res=await fetch(url,{
+      method:'PATCH',
+      headers:{
+        'Authorization':'Bearer '+config.token,
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify(body)
+    });
+    if(!res.ok) throw new Error(await res.text());
+    refreshBoard();
+  }catch(e){
+    errEl.textContent='Action failed: '+e.message;
+    errEl.style.display='block';
+  }
+}
+
+// ─── ASSIGN MODAL ───
+function showAssign(taskId){
+  const overlay=document.getElementById('assign-overlay');
+  const list=document.getElementById('assign-list');
+  list.innerHTML='';
+  const colors=['#5e6ad2','#22c55e','#f59e0b','#3b82f6','#a855f7','#ec4899','#14b8a6','#f97316'];
+  let selected=null;
+  S.agents.forEach((a,i)=>{
+    const el=document.createElement('div');
+    el.className='agent-opt';
+    el.dataset.id=a.id;
+    el.innerHTML=`
+      <div class="agent-avatar" style="background:${colors[i%colors.length]}">${esc(a.name.slice(0,2).toUpperCase())}</div>
+      <div><div style="font-size:.85rem;font-weight:500">${esc(a.name)}</div><div style="font-size:.73rem;color:var(--text3)">${esc(a.tool_type)} · ${a.status}</div></div>
+    `;
+    el.onclick=()=>{
+      list.querySelectorAll('.agent-opt').forEach(o=>o.classList.remove('selected'));
+      el.classList.add('selected');
+      selected=a.id;
+    };
+    list.appendChild(el);
+  });
+  assignCallback=(agentId)=>{
+    doAssign(taskId,agentId);
+  };
+  overlay.style.display='flex';
+  // Override confirm button
+  document.querySelector('#assign-modal .ok').onclick=()=>{
+    if(!selected){document.querySelector('#assign-modal .ok').textContent='Select an agent';return;}
+    closeAssign();
+    doAssign(taskId,selected);
+  };
+}
+
+function closeAssign(){
+  document.getElementById('assign-overlay').style.display='none';
+}
+
+async function doAssign(taskId,agentId){
+  const errEl=document.getElementById('err-msg');
+  errEl.style.display='none';
+  try{
+    const res=await fetch(`${config.server}/api/v1/tasks/${taskId}/assign`,{
+      method:'POST',
+      headers:{
+        'Authorization':'Bearer '+config.token,
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({agent_id:agentId})
+    });
+    if(!res.ok) throw new Error(await res.text());
+    refreshBoard();
+  }catch(e){
+    errEl.textContent='Assign failed: '+e.message;
+    errEl.style.display='block';
+  }
+}
+
+// ─── HELPERS ───
+function esc(s){
+  if(!s) return '';
+  const d=document.createElement('div');
+  d.textContent=s;
+  return d.innerHTML;
+}
+
+const agentColors={};
+let colorIdx=0;
+const palette=['#5e6ad2','#22c55e','#f59e0b','#3b82f6','#a855f7','#ec4899','#14b8a6','#f97316'];
+function agentColor(id){
+  if(!agentColors[id]){agentColors[id]=palette[colorIdx%palette.length];colorIdx++;}
+  return agentColors[id];
+}
+
+// ─── INIT ───
+(function(){
+  const c=getConfig();
+  if(c.server&&c.project&&c.token){
+    config=c;
+    document.getElementById('setup').style.display='none';
+    document.getElementById('loading').style.display='flex';
+    fetchBoard();
+  }else{
+    showSetup();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Othrys Kanban Board — Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-primary: #0a0a0b;
+  --bg-surface: #111113;
+  --bg-elevated: #18181b;
+  --bg-hover: #1f1f23;
+  --bg-card: #141416;
+  --border-default: #27272a;
+  --border-subtle: #1f1f23;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --accent: #5e6ad2;
+  --accent-dim: rgba(94, 106, 210, 0.15);
+  --green: #22c55e;
+  --green-bg: rgba(34, 197, 94, 0.12);
+  --amber: #f59e0b;
+  --amber-bg: rgba(245, 158, 11, 0.12);
+  --red: #ef4444;
+  --red-bg: rgba(239, 68, 68, 0.12);
+  --blue: #3b82f6;
+  --blue-bg: rgba(59, 130, 246, 0.12);
+  --slate: #6b7280;
+  --slate-bg: rgba(107, 114, 128, 0.12);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.5);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+html { font-size: 13px; }
+body {
+  font-family: var(--font);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── HEADER ─── */
+.board-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.board-header h1 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+.board-header .meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
+.meta-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.meta-dot.online { background: var(--green); }
+.meta-dot.offline { background: var(--slate); }
+
+/* ─── AGENTS BAR ─── */
+.agents-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.agents-bar .label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 4px;
+}
+.agent-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.agent-avatar {
+  width: 20px; height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+.agent-status-dot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-left: auto;
+}
+.agent-status-dot.idle { background: var(--green); }
+.agent-status-dot.working { background: var(--amber); }
+.agent-status-dot.disconnected { background: var(--slate); }
+
+/* ─── BOARD ─── */
+.board-container {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px;
+  overflow-x: auto;
+  align-items: flex-start;
+}
+
+.column {
+  min-width: 280px;
+  max-width: 320px;
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 4px 12px 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid var(--border-subtle);
+  margin-bottom: 8px;
+}
+.column-header .count {
+  font-size: 0.7rem;
+  background: var(--bg-elevated);
+  color: var(--text-tertiary);
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.column.proposed .column-header { border-bottom-color: var(--slate); }
+.column.approved .column-header { border-bottom-color: var(--blue); }
+.column.assigned .column-header { border-bottom-color: var(--accent); }
+.column.in_progress .column-header { border-bottom-color: var(--amber); }
+.column.completed .column-header { border-bottom-color: var(--green); }
+.column.failed .column-header { border-bottom-color: var(--red); }
+
+.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 60px;
+  padding: 2px 0;
+}
+
+/* ─── CARD ─── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--shadow-card);
+}
+.card:hover {
+  border-color: var(--border-default);
+  background: var(--bg-hover);
+}
+.card-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.35;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  flex-wrap: wrap;
+}
+.card-meta .module {
+  background: var(--bg-elevated);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 0.7rem;
+}
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-subtle);
+}
+.card-assignee {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+.card-assignee .mini-avatar {
+  width: 16px; height: 16px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 600;
+  color: #fff;
+}
+.card-claim {
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.card-claim.exclusive {
+  background: var(--red-bg);
+  color: var(--red);
+}
+.card-claim.shared_read {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+.card-deps {
+  font-size: 0.65rem;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.card .status-pill {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 1px 7px;
+  border-radius: 10px;
+  text-transform: capitalize;
+}
+.status-pill.proposed { background: var(--slate-bg); color: var(--slate); }
+.status-pill.approved { background: var(--blue-bg); color: var(--blue); }
+.status-pill.assigned { background: var(--accent-dim); color: var(--accent); }
+.status-pill.in_progress { background: var(--amber-bg); color: var(--amber); }
+.status-pill.completed { background: var(--green-bg); color: var(--green); }
+.status-pill.failed { background: var(--red-bg); color: var(--red); }
+
+/* ─── CLAIMS PANEL ─── */
+.claims-panel {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  padding: 10px 24px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow-x: auto;
+}
+.claims-panel .label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.claim-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.claim-badge .lock {
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+.claim-badge .claim-path {
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 0.7rem;
+}
+.claim-badge.exclusive { border-left: 2px solid var(--red); }
+.claim-badge.shared_read { border-left: 2px solid var(--blue); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .board-container {
+    padding: 12px;
+    gap: 10px;
+  }
+  .column { min-width: 240px; width: 240px; }
+  .board-header { flex-direction: column; gap: 8px; align-items: flex-start; }
+}
+
+/* ─── SCROLLBAR ─── */
+::-webkit-scrollbar { height: 6px; width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+</style>
+</head>
+<body>
+
+<header class="board-header">
+  <div>
+    <h1>othrys-server</h1>
+  </div>
+  <div class="meta">
+    <span><span class="meta-dot online"></span> 3 agents online</span>
+    <span><span class="meta-dot offline"></span> 1 disconnected</span>
+    <span>12 tasks</span>
+    <span>5 active claims</span>
+  </div>
+</header>
+
+<div class="agents-bar">
+  <span class="label">Agents</span>
+
+  <div class="agent-chip">
+    <div class="agent-avatar" style="background:#5e6ad2;">PM</div>
+    <span>pm-bot</span>
+    <span class="agent-status-dot idle"></span>
+  </div>
+  <div class="agent-chip">
+    <div class="agent-avatar" style="background:#22c55e;">A1</div>
+    <span>agent-claude</span>
+    <span class="agent-status-dot working"></span>
+  </div>
+  <div class="agent-chip">
+    <div class="agent-avatar" style="background:#f59e0b;">A2</div>
+    <span>agent-cursor</span>
+    <span class="agent-status-dot working"></span>
+  </div>
+  <div class="agent-chip">
+    <div class="agent-avatar" style="background:#ef4444;">A3</div>
+    <span>agent-copilot</span>
+    <span class="agent-status-dot disconnected"></span>
+  </div>
+</div>
+
+<div class="board-container" id="board">
+
+  <!-- PROPOSED -->
+  <div class="column proposed">
+    <div class="column-header">
+      Proposed
+      <span class="count">2</span>
+    </div>
+    <div class="card-list">
+
+      <div class="card">
+        <div class="card-title">Add rate limiting middleware to public API routes</div>
+        <div class="card-meta">
+          <span class="module">internal/server/</span>
+          <span>—</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-assignee">Unassigned</span>
+          <span class="card-deps">⏱ 1 dep</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Implement structured logging with context fields</div>
+        <div class="card-meta">
+          <span class="module">internal/log/</span>
+          <span>—</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-assignee">Unassigned</span>
+          <span></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- APPROVED -->
+  <div class="column approved">
+    <div class="column-header">
+      Approved
+      <span class="count">1</span>
+    </div>
+    <div class="card-list">
+
+      <div class="card">
+        <div class="card-title">Refactor database connection pooling configuration</div>
+        <div class="card-meta">
+          <span class="module">internal/store/</span>
+        </div>
+        <div class="card-footer">
+          <span class="card-assignee">Unassigned</span>
+          <span></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ASSIGNED -->
+  <div class="column assigned">
+    <div class="column-header">
+      Assigned
+      <span class="count">2</span>
+    </div>
+    <div class="card-list">
+
+      <div class="card">
+        <div class="card-title">Migrate task store queries to pgx v5</div>
+        <div class="card-meta">
+          <span class="module">internal/store/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#22c55e;">C</span>
+            agent-claude
+          </div>
+          <span class="card-claim exclusive">🔒 exclusive</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Add WebSocket authentication middleware</div>
+        <div class="card-meta">
+          <span class="module">internal/ws/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#f59e0b;">C</span>
+            agent-cursor
+          </div>
+          <span class="card-deps">⏱ waits for #14</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- IN PROGRESS -->
+  <div class="column in_progress">
+    <div class="column-header">
+      In Progress
+      <span class="count">3</span>
+    </div>
+    <div class="card-list">
+
+      <div class="card">
+        <div class="card-title">Implement claim conflict resolution with directory boundaries</div>
+        <div class="card-meta">
+          <span class="module">internal/coordinator/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#22c55e;">C</span>
+            agent-claude
+          </div>
+          <span class="card-claim exclusive">🔒 exclusive</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Add health check endpoint with DB connectivity probe</div>
+        <div class="card-meta">
+          <span class="module">internal/server/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#22c55e;">C</span>
+            agent-claude
+          </div>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Build Kanban board REST endpoint</div>
+        <div class="card-meta">
+          <span class="module">internal/server/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#f59e0b;">C</span>
+            agent-cursor
+          </div>
+          <span class="card-claim shared_read">👁 shared_read</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- COMPLETED -->
+  <div class="column completed">
+    <div class="column-header">
+      Completed
+      <span class="count">3</span>
+    </div>
+    <div class="card-list">
+
+      <div class="card">
+        <div class="card-title" style="opacity:0.7;">Set up project scaffolding and migration framework</div>
+        <div class="card-meta">
+          <span class="module">migrations/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#5e6ad2;">P</span>
+            pm-bot
+          </div>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="opacity:0.7;">Define task and claim database models</div>
+        <div class="card-meta">
+          <span class="module">internal/models/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#5e6ad2;">P</span>
+            pm-bot
+          </div>
+          <span></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="opacity:0.7;">Implement agent registration and heartbeat</div>
+        <div class="card-meta">
+          <span class="module">internal/agents/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#22c55e;">C</span>
+            agent-claude
+          </div>
+          <span></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- FAILED -->
+  <div class="column failed">
+    <div class="column-header">
+      Failed
+      <span class="count">1</span>
+    </div>
+    <div class="card-list">
+
+      <div class="card" style="border-left: 2px solid var(--red);">
+        <div class="card-title">Experimental gRPC endpoint PoC</div>
+        <div class="card-meta">
+          <span class="module">internal/api/</span>
+        </div>
+        <div class="card-footer">
+          <div class="card-assignee">
+            <span class="mini-avatar" style="background:#ef4444;">C</span>
+            agent-copilot
+          </div>
+          <span class="status-pill failed">abandoned</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<div class="claims-panel">
+  <span class="label">Active Claims</span>
+
+  <div class="claim-badge exclusive">
+    <span class="lock">🔒</span>
+    <span class="claim-path">internal/coordinator/</span>
+    <span style="color:var(--text-tertiary);">agent-claude</span>
+  </div>
+  <div class="claim-badge exclusive">
+    <span class="lock">🔒</span>
+    <span class="claim-path">internal/store/</span>
+    <span style="color:var(--text-tertiary);">agent-claude</span>
+  </div>
+  <div class="claim-badge shared_read">
+    <span class="lock">👁</span>
+    <span class="claim-path">internal/server/</span>
+    <span style="color:var(--text-tertiary);">agent-cursor</span>
+  </div>
+  <div class="claim-badge shared_read">
+    <span class="lock">👁</span>
+    <span class="claim-path">internal/models/</span>
+    <span style="color:var(--text-tertiary);">agent-cursor</span>
+  </div>
+  <div class="claim-badge exclusive">
+    <span class="lock">🔒</span>
+    <span class="claim-path">internal/api/</span>
+    <span style="color:var(--text-tertiary);">agent-copilot</span>
+  </div>
+</div>
+
+<script>
+// This mockup is static. The real implementation will:
+// 1. Fetch board state from GET /api/v1/projects/:id/board
+// 2. Open WebSocket to /ws?token=...&agent=...
+// 3. Listen for task_assigned, task_approved, task_status_changed, etc.
+// 4. Mutate the DOM to move cards between columns in real-time
+console.log('Othrys Kanban Board — Mockup');
+</script>
+
+</body>
+</html>
