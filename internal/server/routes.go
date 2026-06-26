@@ -32,6 +32,7 @@ func RegisterRoutes(
 	agentH := handlers.NewAgentHandler(coord)
 	claimH := handlers.NewClaimHandler(coord)
 	mergeH := handlers.NewMergeHandler(coord)
+	boardH := handlers.NewBoardHandler(store.NewBoardStore(st))
 
 	bridge := ws.NewBridge(bus, hub)
 	wsH := handlers.NewWSHandler(coord, hub, bridge)
@@ -54,6 +55,7 @@ func RegisterRoutes(
 	api.Get("/projects/:id/agents", agentH.ListAgents)
 	api.Get("/projects/:id/claims", claimH.ListClaims)
 	api.Post("/projects/:id/merge-check", mergeH.CheckMerge)
+	api.Get("/projects/:id/board", boardH.GetBoard)
 	api.Post("/projects/:id/tasks/approve-all", taskH.ApproveAll)
 	api.Post("/projects/:id/tasks/reject-all", taskH.RejectAllProposed)
 
