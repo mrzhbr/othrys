@@ -36,6 +36,8 @@ func (b *Bridge) routeEvent(event models.Event) {
 	switch event.EventType {
 	case models.EventTypeTaskAssigned:
 		msgType = MsgTypeTaskAssigned
+	case models.EventTypeTaskApproved:
+		msgType = MsgTypeTaskApproved
 	case models.EventTypeTaskStatusChange:
 		msgType = MsgTypeTaskStatusChanged
 	case models.EventTypeClaimGranted:

@@ -5,12 +5,14 @@ import "encoding/json"
 // Message types for server → client
 const (
 	MsgTypeTaskAssigned       = "task_assigned"
+	MsgTypeTaskApproved       = "task_approved"
 	MsgTypeClaimGranted       = "claim_granted"
 	MsgTypeClaimConflict      = "claim_conflict"
 	MsgTypeClaimReleased      = "claim_released"
 	MsgTypeTaskStatusChanged  = "task_status_changed"
 	MsgTypeMergeReady         = "merge_ready"
 	MsgTypeClaimsSnapshot     = "claims_snapshot"
+	MsgTypeBoardSync          = "board_sync"
 	MsgTypePing               = "ping"
 	MsgTypeError              = "error"
 )
