@@ -100,7 +100,7 @@ func newTaskMineCmd() *cobra.Command {
 						continue
 					}
 					if !found {
-						fmt.Println("Your assigned tasks:\n")
+						fmt.Println("Your assigned tasks:")
 						found = true
 					}
 					id, _ := task["id"].(string)
