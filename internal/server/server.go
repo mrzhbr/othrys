@@ -1,6 +1,7 @@
 package server
 
 import (
+	"embed"
 	"fmt"
 	"time"
 
@@ -13,6 +14,9 @@ import (
 	"github.com/moritzhuber/othrys/internal/store"
 	"github.com/moritzhuber/othrys/internal/ws"
 )
+
+//go:embed web/kanban/index.html
+var kanbanFS embed.FS
 
 // App holds the Fiber application and its dependencies.
 type App struct {
@@ -45,6 +49,13 @@ func New(
 	app.Use(logger.New())
 
 	RegisterRoutes(app, pool, bus, hub, st, coord)
+
+	// Serve the Kanban board frontend
+	kanbanData, _ := kanbanFS.ReadFile("web/kanban/index.html")
+	app.Get("/kanban", func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "text/html; charset=utf-8")
+		return c.Send(kanbanData)
+	})
 
 	return &App{
 		fiber: app,
