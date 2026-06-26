@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -131,9 +132,15 @@ func (cs *ClaimStore) ListActiveByProject(ctx context.Context, projectID string)
 }
 
 // CheckConflict returns any active exclusive claims that overlap with the given path.
-// Path overlap is defined as: one path is a prefix of the other.
+// Path overlap is defined as: one path is a directory prefix of the other
+// (i.e., "src/auth/" overlaps with "src/auth/main.go" but NOT with "src/auth-middleware/").
 // For shared_read requests, only exclusive conflicts are returned.
 func (cs *ClaimStore) CheckConflict(ctx context.Context, projectID, path string, requestedType models.ClaimType) ([]*models.Claim, error) {
+	// Normalize path to end with "/" for consistent prefix matching
+	if !strings.HasSuffix(path, "/") {
+		path += "/"
+	}
+
 	// Shared_read vs shared_read never conflicts
 	// Only exclusive claims can block other claims
 	var rows pgx.Rows
@@ -148,8 +155,8 @@ func (cs *ClaimStore) CheckConflict(ctx context.Context, projectID, path string,
 			  AND status = 'active'
 			  AND (
 			    path = $2
-			    OR ($2 LIKE path || '%' AND LEFT($2, LENGTH(path)) = path)
-			    OR (path LIKE $2 || '%' AND LEFT(path, LENGTH($2)) = $2)
+			    OR (path || '/') LIKE ($2 || '/%')
+			    OR ($2 || '/') LIKE (path || '/%')
 			  )
 		`, projectID, path)
 	} else {
@@ -162,8 +169,8 @@ func (cs *ClaimStore) CheckConflict(ctx context.Context, projectID, path string,
 			  AND claim_type = 'exclusive'
 			  AND (
 			    path = $2
-			    OR ($2 LIKE path || '%' AND LEFT($2, LENGTH(path)) = path)
-			    OR (path LIKE $2 || '%' AND LEFT(path, LENGTH($2)) = $2)
+			    OR (path || '/') LIKE ($2 || '/%')
+			    OR ($2 || '/') LIKE (path || '/%')
 			  )
 		`, projectID, path)
 	}
